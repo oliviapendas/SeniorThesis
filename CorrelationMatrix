@@ -1,0 +1,36 @@
+# Load required packages
+library(readxl)
+library(dplyr)
+library(corrplot)
+library(RColorBrewer)  # Load RColorBrewer for color palettes
+
+# Load your data
+dat <- read_excel("El_Tatio_GDGTs_2025.xlsx")
+
+# Select relevant geochemical parameters
+params <- dat %>% select(pH, Salinity, Temp, DO, ORP)  # Update parameter names
+
+# Calculate correlation matrix
+corr_matrix <- cor(params, use = "pairwise.complete.obs")
+
+# Set up the PNG device with larger dimensions
+png("correlation_plot_improved.png", width = 1200, height = 800, res = 300)
+
+# Generate the improved correlation plot
+corrplot(corr_matrix, method = "color",
+         type = "full",  # Full correlation matrix
+         tl.col = "black",
+         tl.srt = 45,  # Rotate labels
+         cl.lim = c(-1, 1),  # Set limits for color legend
+         addgrid.col = "gray", 
+         number.cex = 0.5,  # Adjust text size for numbers
+         diag = FALSE,  # Hide the diagonal
+         col = brewer.pal(n = 8, name = "RdYlBu"),  # Use a diverging color palette
+         addCoef.col = "black",  # Add correlation coefficients
+         title = "Correlation Matrix of Geochemical Parameters",  # Add a title
+         cex.main = 0.8,  # Change title size; adjust as necessary
+         mar = c(1, 1, 2, 4),  # Adjust margins for title and legend
+         tl.cex = 0.7)  # Adjust size of text labels
+
+# Close the device
+dev.off()  
