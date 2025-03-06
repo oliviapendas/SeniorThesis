@@ -1,0 +1,29 @@
+library("readxl")
+dat <- read_excel("El_Tatio_GDGTs_2025.xlsx")
+
+# Convert 'Type' to a factor
+#data$Type <- as.factor(data$Type)
+
+### Model for RI vs. pH ###
+# Fit ANCOVA model
+ancova_model <- lm(Ring_index ~ pH * Type, data = dat)
+# View summary
+summary(ancova_model)
+
+### Model for RI vs. Temp ###
+# Fit ANCOVA model
+ancova_model <- lm(Ring_index ~ Temp * Type, data = da
+# View summary
+summary(ancova_model)
+
+### Model for RI vs. DO ###
+ancova_model <- lm(Ring_index ~ DO * Type, data = dat)
+summary(ancova_model)
+
+### Model for RI vs. Salinity
+ancova_model <- lm(Ring_index ~ Salinity * Type, data = dat)
+summary(ancova_model)
+
+### Model for RI vs. ORP ###
+ancova_model <- lm(Ring_index ~ ORP * Type, data = dat)
+summary(ancova_model)
