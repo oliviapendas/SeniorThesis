@@ -1,0 +1,272 @@
+#### Ring Index vs. Temp with points colored by pH, one trendline, CI commented out (not significant) ####
+
+# Assume the 'dat' data frame already exists and contains the required columns.
+cat("\014") #clears console
+rm(list=ls()) 
+graphics.off()
+
+#### load relevant packages ####
+library("readxl")
+library("tidyverse")
+library("gt")
+
+#### load data ####
+dat <- read_excel("El_Tatio_GDGTs_2025.xlsx")
+
+# Define a function to map pH values to colors in the range 1 to 10
+color_map_pH <- colorRampPalette(c("darkorchid4", "thistle2"))(10 - 1 + 1)
+
+# Add a new column "col_pH" with the corresponding color hex codes
+dat <- transform(dat,
+                 col_pH = color_map_pH[cut(dat$pH, breaks = 9, labels = FALSE) + 1])
+
+# Make dataframe for scalebar
+pH <- c(seq(1, 10, 1))
+col_pH <- c(rep(NA, length(pH)))
+col_pH_dat <- as.data.frame(cbind(pH, col_pH))
+col_pH_dat <- transform(col_pH_dat,
+                        col_pH = color_map_pH[cut(pH, breaks = 9, labels = FALSE) + 1])
+
+# Linear regression
+TempvsRI <- lm(Ring_index ~ Temp, data = dat)
+summary(TempvsRI)
+
+# Extract the coefficients and R² value
+coefficients <- coef(TempvsRI)
+slope <- round(coefficients[2], 1)
+intercept <- round(coefficients[1], 1)
+r_squared <- round(summary(TempvsRI)$r.squared, 2)
+
+# Save the plot as a PNG file
+png("RingIndex_vs_Temp.png", width = 4, height = 3, units = 'in', res = 300)
+par(mfrow = c(1, 1), mar = c(3, 3, 2, 6), mgp = c(3, 0.4, 0))  # Increased right margin
+
+# Create the initial plot
+plot(dat$Temp, dat$Ring_index,
+     las = 1,
+     xlim = c(50, 90),
+     ylim = c(0, 5),
+     pch = NA,  # Do not plot Default shape
+     cex = 2,
+     col = dat$col_pH,  # Color code points by pH
+     lwd = 1.5,
+     xlab = "",
+     ylab = "",
+     xaxt = "n",
+     yaxt = "n")
+
+# Separating data into CL and IPL
+CL_data <- subset(dat, Type == "CL")
+IPL_data <- subset(dat, Type == "IPL")
+
+# Add CL points (squares)
+points(CL_data$Temp, CL_data$Ring_index,  
+       pch = 15,   # Square shape for CL
+       cex = 1,   
+       col = CL_data$col_pH)  # Use color mapping
+
+# Add IPL points (circles)
+points(IPL_data$Temp, IPL_data$Ring_index,  
+       pch = 16,    # Circle shape for IPL
+       cex = 1,   
+       col = IPL_data$col_pH)  # Use color mapping
+
+# Add the regression line
+abline(TempvsRI, col = "grey", lty = 2, lwd = 3)
+
+# Add regression parameters
+equation_text <- paste("RI =", slope, "* T +", intercept)
+r_squared_text <- paste("R² =", r_squared)
+text(60, 0.6, labels = equation_text, col = "grey", cex = 0.8)
+text(60, 0.2, labels = r_squared_text, col = "grey", cex = 0.8)
+
+# Add axes
+axis(1, at = seq(50, 90, 10), las = 1, tck = -0.035, cex.axis = 1, line = 0)
+axis(2, at = seq(0, 5, 1), las = 1, tck = -0.035, cex.axis = 1, line = 0)
+
+# Titles
+title(main = "Ring Index vs Temperature", line = 0.5, cex.main = 1.2)
+title(xlab = "Temperature", line = 1.4, cex.lab = 1.3)
+title(ylab = "Ring Index", line = 1.4, cex.lab = 1.3)
+
+# Legend positioned outside the graph area
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+legend("right", inset=c(-0.4,-2), title = "pH", cex = 0.5,
+       legend = seq(1, 10, by = 1),
+       pch = 15,  
+       col = color_map_pH,  
+       pt.cex = 2,
+       bty = "n",
+       y.intersp = 0.8,    # Closer spacing between legend items
+       title.adj = 0.8)   # Center the title relative to legend items"))
+# Add Legend for CL and IPL shapes
+legend("bottomright", inset = c(-0.65, -0.3), title = "Type",
+       legend = c("CL (Squares)", "IPL (Circles)"),
+       pch = c(15, 1),  # Square for CL, Circle for IPL
+       col = c("black", "black"),  # Placeholder colors
+       pt.cex = 1, 
+       bty = "n",x,
+       cex = 0.8,          # Smaller text size (adjust as needed)
+       text.width = strwidth("CL (Squares)"), # To ensure both entries fit
+       y.intersp = 0.7)    # Closer spacing between legend entries)
+
+# Add the 95% CI to linear regression
+# new_data <- data.frame(Temp = seq(50, 90, length.out = 100))
+# ci_new <- predict(TempvsRI, new_data, interval = "confidence", level = 0.95)
+
+# Ensure the polygon ends at the bounds of the plotting area
+# polygon(c(new_data$Temp, rev(new_data$Temp)),
+        #c(pmax(ci_new[, "lwr"], 0), rev(pmin(ci_new[, "upr"], 5))),  # Clamp CI to plotting area
+       # col = rgb(col2rgb("grey")[1] / 255,
+                  #col2rgb("grey")[2] / 255,
+                  #col2rgb("grey")[3] / 255,
+                  #alpha = 0.3),
+        #border = NA)  # No border
+
+# Summarize the model
+TempvsRI_summary <- summary(TempvsRI)
+print(TempvsRI_summary)
+
+dev.off()  # Save the plot
+
+#### Ring Index vs. Temp with two trendlines, two confidence intervals (for supplement) ####
+# Assume the 'dat' data frame already exists and contains the required columns.
+cat("\014") #clears console
+rm(list=ls())
+graphics.off()
+#### load relevant packages ####
+library("readxl")
+library("tidyverse")
+library("gt")
+#### load data ####
+dat <- read_excel("El_Tatio_GDGTs_2025.xlsx")
+
+# Define a function to map pH values to colors in the range 1 to 10
+color_map_pH <- colorRampPalette(c("darkorchid4", "thistle2"))(10 - 1 + 1)
+# Add a new column "col_pH" with the corresponding color hex codes
+dat <- transform(dat,
+                 col_pH = color_map_pH[cut(dat$pH, breaks = 9, labels = FALSE) + 1])
+# Make dataframe for scalebar
+pH <- c(seq(1, 10, 1))
+col_pH <- c(rep(NA, length(pH)))
+col_pH_dat <- as.data.frame(cbind(pH, col_pH))
+col_pH_dat <- transform(col_pH_dat,
+                        col_pH = color_map_pH[cut(pH, breaks = 9, labels = FALSE) + 1])
+
+# Separate data into CL and IPL
+CL_data <- subset(dat, Type == "CL")
+IPL_data <- subset(dat, Type == "IPL")
+
+# Linear regression for CL and IPL
+TempvsRI_CL <- lm(Ring_index ~ Temp, data = CL_data)
+TempvsRI_IPL <- lm(Ring_index ~ Temp, data = IPL_data)
+
+# Extract coefficients and R² values for CL
+slope_CL <- round(coef(TempvsRI_CL)[2], 1)
+intercept_CL <- round(coef(TempvsRI_CL)[1], 1)
+r_squared_CL <- round(summary(TempvsRI_CL)$r.squared, 2)
+
+# Extract coefficients and R² values for IPL
+slope_IPL <- round(coef(TempvsRI_IPL)[2], 1)
+intercept_IPL <- round(coef(TempvsRI_IPL)[1], 1)
+r_squared_IPL <- round(summary(TempvsRI_IPL)$r.squared, 2)
+
+# Save the plot as a PNG file
+png("RingIndex_vs_Temp.png", width = 4, height = 3, units = 'in', res = 300)
+par(mfrow = c(1, 1), mar = c(3, 3, 2, 6), mgp = c(3, 0.4, 0))  # Increased right margin
+
+# Create the initial plot
+plot(dat$Temp, dat$Ring_index,
+     las = 1,
+     xlim = c(50, 90),
+     ylim = c(0, 5),
+     pch = NA,  # Do not plot Default shape
+     cex = 2,
+     col = dat$col_pH,  # Color code points by pH
+     lwd = 1.5,
+     xlab = "",
+     ylab = "",
+     xaxt = "n",
+     yaxt = "n")
+
+# Add CL points (squares)
+points(CL_data$Temp, CL_data$Ring_index,  
+       pch = 15,   # Square shape for CL
+       cex = 1,   
+       col = CL_data$col_pH)  # Use color mapping
+
+# Add IPL points (circles)
+points(IPL_data$Temp, IPL_data$Ring_index,  
+       pch = 16,    # Circle shape for IPL
+       cex = 1,   
+       col = IPL_data$col_pH)  # Use color mapping
+
+# Add regression lines for each type
+abline(TempvsRI_CL, col = "blue", lty = 2, lwd = 3)  # CL trend line
+abline(TempvsRI_IPL, col = "red", lty = 2, lwd = 3)  # IPL trend line
+
+# Add regression parameters for CL
+equation_text_CL <- paste("RI_CL =", slope_CL, "* T +", intercept_CL)
+r_squared_text_CL <- paste("R² = ", r_squared_CL)
+text(57, 0.9, labels = equation_text_CL, col = "blue", cex = 0.5)
+text(57, 0.6, labels = r_squared_text_CL, col = "blue", cex = 0.5)
+
+# Add regression parameters for IPL
+equation_text_IPL <- paste("RI_IPL =", slope_IPL, "* T +", intercept_IPL)
+r_squared_text_IPL <- paste("R² = ", r_squared_IPL)
+text(57, 0.3, labels = equation_text_IPL, col = "red", cex = 0.5)
+text(57, 0, labels = r_squared_text_IPL, col = "red", cex = 0.5)
+
+# Add axes
+axis(1, at = seq(50, 90, 10), las = 1, tck = -0.035, cex.axis = 1, line = 0)
+axis(2, at = seq(0, 5, 1), las = 1, tck = -0.035, cex.axis = 1, line = 0)
+
+# Titles
+title(main = "Ring Index vs Temperature", line = 0.5, cex.main = 1.2)
+title(xlab = "Temperature", line = 1.4, cex.lab = 1.3)
+title(ylab = "Ring Index", line = 1.4, cex.lab = 1.3)
+
+# Legend positioned outside the graph area
+par(mar = c(5.1, 4.1, 4.1, 8.1), xpd = TRUE)
+legend("right", inset = c(-0.4, -2), title = "pH", cex = 0.5,
+       legend = seq(1, 10, by = 1),
+       pch = 15,  
+       col = color_map_pH,  
+       pt.cex = 2,
+       bty = "n",
+       y.intersp = 0.8,    # Closer spacing between legend items
+       title.adj = 0.8)   # Center the title relative to legend items
+
+# Add Legend for CL and IPL shapes
+legend("bottomright", inset = c(-0.65, -0.3), title = "Type",
+       legend = c("CL (Squares)", "IPL (Circles)"),
+       pch = c(15, 16),  # Square for CL, Circle for IPL
+       col = c("black", "black"),  # Placeholder colors
+       pt.cex = 1,
+       bty = "n",
+       cex = 0.8,          # Smaller text size (adjust as needed)
+       text.width = strwidth("CL (Squares)"), # To ensure both entries fit
+       y.intersp = 0.7)    # Closer spacing between legend entries
+
+# Add the 95% CI to linear regression for CL
+new_data_CL <- data.frame(Temp = seq(50, 90, length.out = 100))
+ci_new_CL <- predict(TempvsRI_CL, new_data_CL, interval = "confidence", level = 0.95)
+polygon(c(new_data_CL$Temp, rev(new_data_CL$Temp)),
+        c(pmax(ci_new_CL[, "lwr"], 0), rev(pmin(ci_new_CL[, "upr"], 5))),  
+        col = rgb(col2rgb("blue")[1] / 255,
+                  col2rgb("blue")[2] / 255,
+                  col2rgb("blue")[3] / 255,
+                  alpha = 0.3),
+        border = NA)  # No border
+
+# Add the 95% CI to linear regression for IPL
+ci_new_IPL <- predict(TempvsRI_IPL, new_data_CL, interval = "confidence", level = 0.95)
+polygon(c(new_data_CL$Temp, rev(new_data_CL$Temp)),
+        c(pmax(ci_new_IPL[, "lwr"], 0), rev(pmin(ci_new_IPL[, "upr"], 5))),  
+        col = rgb(col2rgb("red")[1] / 255,
+                  col2rgb("red")[2] / 255,
+                  col2rgb("red")[3] / 255,
+                  alpha = 0.3),
+        border = NA)  # No border
+
+dev.off()  # Save the plot
