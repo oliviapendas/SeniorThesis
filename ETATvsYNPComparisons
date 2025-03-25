@@ -6,7 +6,7 @@ summary(pHvsRI)
 
 # Extract the coefficients and R² value
 coefficients <- coef(pHvsRI)
-slope <- round(coefficients[2], 1)
+slope <- round(coefficients[2], 2)
 intercept <- round(coefficients[1], 1)
 r_squared <- round(summary(pHvsRI)$r.squared, 2)
 
@@ -107,7 +107,7 @@ legend("bottomright", inset = c(0, 0),
 
 dev.off()  # Save the plot
 
-#### New Attempt at Ring Index vs. Temp with confidence intervals points colored by pH ####
+#### Ring Index vs. Temp with ETAT points and regression, YNP regression ####
 
 # Assume the 'dat' data frame already exists and contains the required columns.
 cat("\014") #clears console
@@ -128,7 +128,7 @@ summary(TempvsRI)
 
 # Extract the coefficients and R² value
 coefficients <- coef(TempvsRI)
-slope <- round(coefficients[2], 1)
+slope <- round(coefficients[2], 2)
 intercept <- round(coefficients[1], 1)
 r_squared <- round(summary(TempvsRI)$r.squared, 2)
 
