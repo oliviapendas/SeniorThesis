@@ -364,4 +364,144 @@ print(ETAT_RIvspH_summary)
 YNP_RIvspH_summary <- summary(YNP_RIvspH)
 print(YNP_RIvspH_summary)
 
+dev.off()  # Save the plot
+
+#### ETAT versus YNP RI vs. Temp with points and trend lines for both sites ####
+
+# Assume the 'dat' data frame already exists and contains the required columns.
+cat("\014") #clears console
+rm(list=ls()) 
+graphics.off()
+
+#### load relevant packages ####
+library("readxl")
+library("tidyverse")
+library("gt")
+
+#### load data ####
+dat <- read_excel("ETATvsYNP2025.xltx")
+
+# Define a color mapping function
+get_color <- function(location) {
+  if (location == "ETAT") {
+    return("hotpink")
+  } else if (location == "YNP") {
+    return("turquoise")
+  } else {
+    return("gray")  # Default for other locations
+  }
+}
+
+# Separating data into CL and IPL
+CL_data <- subset(dat, Type == "CL")
+IPL_data <- subset(dat, Type == "IPL")
+
+# Separating data into ETAT and YNP
+ETAT_data <- subset(dat, Location == "ETAT")
+YNP_data <- subset(dat, Location == "YNP")
+
+# Linear regression for ETAT and YNP
+ETAT_RIvsTemp <- lm(Ring_index ~ Temp, data = ETAT_data)  # Regression for CL
+YNP_RIvsTemp <- lm(Ring_index ~ Temp, data = YNP_data)  # Regression for IPL
+
+# Create the plot
+png("Comparison_RingIndex_vs_Temp.png", width = 4, height = 3, units = 'in', res = 300)
+par(mfrow = c(1, 1), mar = c(3, 3, 2, 6), mgp = c(3, 0.4, 0))  # Increased right margin
+
+# Create the initial plot
+plot(dat$Temp, dat$Ring_index,
+     las = 1,
+     xlim = c(50, 100),
+     ylim = c(0, 5),
+     pch = NA,  # Do not plot default shape
+     cex = 2,
+     col = "black",
+     lwd = 1.5,
+     xlab = "",
+     ylab = "",
+     xaxt = "n",
+     yaxt = "n")
+
+# Add CL points (squares)
+points(CL_data$Temp, CL_data$Ring_index,  
+       pch = 15,   # Square shape for CL
+       cex = 1,   
+       col = sapply(CL_data$Location, get_color))  # Use color mapping
+
+# Add IPL points (circles)
+points(IPL_data$Temp, IPL_data$Ring_index,  
+       pch = 1,    # Circle shape for IPL
+       cex = 1,   
+       col = sapply(IPL_data$Location, get_color))  # Use color mapping
+
+# Add linear trend line for ETAT
+abline(ETAT_RIvsTemp, col = get_color("ETAT"), lty = 2, lwd = 2)
+
+# Add linear trend line for YNP
+abline(YNP_RIvsTemp, col = get_color("YNP"), lty = 2, lwd = 2)
+
+# Extract coefficients and R² values for ETAT
+coefficients_ETAT <- coef(ETAT_RIvsTemp)
+slope_ETAT <- round(coefficients_ETAT[2], 2)
+intercept_ETAT <- round(coefficients_ETAT[1], 1)
+r_squared_ETAT <- round(summary(ETAT_RIvsTemp)$r.squared, 2)
+
+# Extract coefficients and R² values for YNP
+coefficients_YNP <- coef(YNP_RIvsTemp)
+slope_YNP <- round(coefficients_YNP[2], 2)
+intercept_YNP <- round(coefficients_YNP[1], 1)
+r_squared_YNP <- round(summary(YNP_RIvsTemp)$r.squared, 2)
+
+# Add regression parameters for ETAT
+equation_text_ETAT <- paste("El Tatio: RI =", slope_ETAT, "* Temp +", intercept_ETAT)
+r_squared_text_ETAT <- paste("R² =", r_squared_ETAT)
+
+# Add regression parameters for YNP
+equation_text_YNP <- paste("Yellowstone: RI =", slope_YNP, "* Temp +", intercept_YNP)
+r_squared_text_YNP <- paste("R² =", r_squared_YNP)
+
+# Create a legend for ETAT
+legend("bottomleft", inset = c(0, 0.10),
+       legend = c(equation_text_ETAT, r_squared_text_ETAT),
+       col = "hotpink",
+       lwd = 2,
+       lty = c(2, NA),
+       bty = "n", cex = 0.5)  
+
+# Create a legend for YNP, positioned just below the ETAT legend
+legend("bottomleft", inset = c(0, 0),  # Adjusted Y position
+       legend = c(equation_text_YNP, r_squared_text_YNP),
+       col = "turquoise",
+       lwd = 2,
+       lty = c(2, NA),
+       bty = "n", cex = 0.5)
+
+# Add axes
+axis(1, at = seq(50, 100, 10), las = 1, tck = -0.035, cex.axis = 1, line = 0)
+axis(2, at = seq(0, 5, 1), las = 1, tck = -0.035, cex.axis = 1, line = 0)
+
+# Titles
+title(main = "Ring Index vs Temperature", line = 0.5, cex.main = 1.2)
+title(xlab = "Temperature (°C)", line = 1.4, cex.lab = 1.3)
+title(ylab = "Ring Index", line = 1.2, cex.lab = 1.3)
+
+# Add Legend for CL and IPL shapes
+legend("bottomright", inset = c(-0.65, -0.3), title = "Type",
+       legend = c("CL (Squares)", "IPL (Circles)"),
+       pch = c(15, 1),  # Square for CL, Circle for IPL
+       col = c("black", "black"),  # Colors matching the trend lines
+       pt.cex = 1,
+       bty = "n",
+       cex = 0.8,          # Smaller text size (adjust as needed)
+       text.width = strwidth("CL (Squares)"), # To ensure both entries fit
+       y.intersp = 0.7)    # Closer spacing between legend entries
+
+# Summarize the ETAT model
+ETAT_RIvsTemp_summary <- summary(ETAT_RIvsTemp)
+print(ETAT_RIvsTemp_summary)
+
+# Summarize the YNP model
+YNP_RIvsTemp_summary <- summary(YNP_RIvsTemp)
+print(YNP_RIvsTemp_summary)
+
 dev.off()  # Save the plot  
