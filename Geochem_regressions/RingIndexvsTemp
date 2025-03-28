@@ -33,7 +33,7 @@ summary(TempvsRI)
 
 # Extract the coefficients and R² value
 coefficients <- coef(TempvsRI)
-slope <- round(coefficients[2], 1)
+slope <- round(coefficients[2], 2)
 intercept <- round(coefficients[1], 1)
 r_squared <- round(summary(TempvsRI)$r.squared, 2)
 
