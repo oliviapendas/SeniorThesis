@@ -33,7 +33,7 @@ summary(RIvsDO)
 
 # Extract the coefficients and R² value
 coefficients <- coef(RIvsDO)
-slope <- round(coefficients[2], 1)
+slope <- round(coefficients[2], 2)
 intercept <- round(coefficients[1], 1)
 r_squared <- round(summary(RIvsDO)$r.squared, 2)
 
@@ -77,7 +77,7 @@ abline(RIvsDO, col = "grey", lty = 2, lwd = 3)
 # Add regression parameters
 equation_text <- paste("RI =", slope, "* DO +", intercept)
 r_squared_text <- paste("R² =", r_squared)
-text(7, 0.6, labels = equation_text, col = "grey", cex = 0.8)
+text(9, 0.6, labels = equation_text, col = "grey", cex = 0.8)
 text(7, 0.2, labels = r_squared_text, col = "grey", cex = 0.8)
 
 # Add axes
