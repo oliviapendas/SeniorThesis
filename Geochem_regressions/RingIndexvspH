@@ -1,7 +1,5 @@
 #### Ring Index vs. pH with points colored by temp, one trendline + CI ####
 
-# Assume the 'dat' data frame already exists and contains the required columns.
-
 # Define a function to map temp values to colors in the 50 to 100 °C range
 color_map <- colorRampPalette(c("blue", "red"))(100 - 50 + 1)
 
