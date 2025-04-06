@@ -1,0 +1,126 @@
+#### pH vs. Temp, no point coloration ####
+
+#### Load relevant packages ####
+library("readxl")
+library("tidyverse")
+library("gt")
+
+#### Load data ####
+dat <- read_excel("El_Tatio_GDGTs_2025.xlsx")
+# Check the structure and names of your data frame
+str(dat)
+names(dat)
+
+# Linear regression (flipped axes)
+pHvsTemp <- lm(dat$pH ~ dat$Temp)  # Update regression model
+
+# Extract the coefficients and R² value
+coefficients <- coef(pHvsTemp)
+slope <- round(coefficients[2], 2)
+intercept <- round(coefficients[1], 2)
+r_squared <- round(summary(pHvsTemp)$r.squared, 2)
+
+# Save the plot as a PNG file
+png("pHvsTemp.png", width = 4, height = 3, units = 'in', res = 300)
+par(mfrow = c(1, 1), mar = c(3, 3, 2, 6), mgp = c(3, 0.4, 0))
+
+# Create the plot (flipping axes)
+plot(dat$pH ~ dat$Temp,  # pH as the dependent variable
+     las = 1,
+     xlim = c(50, 90),  # Adjust limits for temperature
+     ylim = c(0, 10),   # Adjust limits for pH
+     pch = 1,  
+     cex = 1,
+     col = "hotpink",  
+     lwd = 1.5,
+     xlab = "Temperature (C)",  # Update xlab
+     ylab = "pH",               # Update ylab
+     xaxt = "n",
+     yaxt = "n")
+
+# Add regression line
+abline(pHvsTemp, lwd = 3, lty = 2, col = "grey70")
+
+# Add regression parameters
+equation_text <- paste("pH =", slope, "* Temp ", intercept)
+r_squared_text <- paste("R² =", r_squared)
+text(78, 1, pos = 1, labels = equation_text, col = "grey", cex = 0.8)
+text(86, 1.75, pos = 1, labels = r_squared_text, col = "grey", cex = 0.8)
+
+# Add axes
+axis(1, at = seq(50, 90, 10), las = 1, tck = -0.035, cex.axis = 1, line = 0)
+axis(2, at = seq(0, 10, 2), las = 1, tck = -0.035, cex.axis = 1, line = 0)
+
+# Titles
+title(main = "pH vs. Temperature", line = 0.5, cex.main = 1.2)
+title(xlab = "Temperature (C)", line = 1.4, cex.lab = 1.3)
+title(ylab = "pH", line = 1.2, cex.lab = 1.3)
+
+# Summarize the model
+pHvsTempSummary <- summary(pHvsTemp)
+print(pHvsTempSummary)
+
+dev.off()  # Save the plot
+
+#### pH vs. Salinity, no point coloration ####
+#### load relevant packages ####
+library("readxl")
+library("tidyverse")
+library("gt")
+#### load data ####
+dat <- read_excel("El_Tatio_GDGTs_2025.xlsx")
+
+# Check the structure and names of your data frame
+str(dat)
+names(dat)
+
+# Linear regression
+pHvsSalinity <- lm(dat$pH~ dat$Salinity)
+
+# Extract the coefficients and R² value
+coefficients <- coef(pHvsSalinity)
+slope <- round(coefficients[2], 2)
+intercept <- round(coefficients[1], 2)
+r_squared <- round(summary(pHvsSalinity)$r.squared, 2)
+
+# Save the plot as a PNG file
+png("pHvsSalinity.png", width = 4, height = 3, units = 'in', res = 300)
+par(mfrow = c(1, 1), mar = c(3, 3, 2, 6), mgp = c(3, 0.4, 0))
+
+# Create the plot
+plot(dat$pH ~ dat$Salinity,
+     las = 1,
+     xlim = c(0, 15),
+     ylim = c(0, 10),
+     pch = 1,  
+     cex = 1,
+     col = "hotpink",  
+     lwd = 1.5,
+     xlab = "",
+     ylab = "",
+     xaxt = "n",
+     yaxt = "n")
+
+# Add regression line
+abline(pHvsSalinity, lwd = 3, lty = 2, col = "grey70")
+
+# Add regression parameters
+equation_text <- paste("pH =", slope, "* Salinity +", intercept)
+r_squared_text <- paste("R² =", r_squared)
+text(10, 1, pos = 1, labels = equation_text, col = "grey", cex = 0.8)
+text(13, 1.75, 56, pos = 1, labels = r_squared_text, col = "grey", cex = 0.8)
+
+# Add axes
+axis(1, at = seq(0, 15, 1), las = 1, tck = -0.035, cex.axis = 1, line = 0)
+axis(2, at = seq(0, 10, 2), las = 1, tck = -0.035, cex.axis = 1, line = 0)
+
+# Titles
+title(main = "pH vs. Salinity", line = 0.5, cex.main = 1.2)
+title(xlab = "Salinity (ppt)", line = 1.4, cex.lab = 1.3)
+title(ylab = "pH", line = 1.2, cex.lab = 1.3)
+
+# Summarize the model
+pHvsSalinitySummary <- summary(pHvsSalinity)
+print(pHvsSalinitySummary)
+
+dev.off()  # Save the plot
