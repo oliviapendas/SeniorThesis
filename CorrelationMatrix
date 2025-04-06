@@ -43,6 +43,19 @@ corr_melted <- melt(corr_matrix)
 # Add the corresponding p-value information to the melted data frame
 corr_melted$p_value <- melt(p_matrix)$value
 
+# Print the detailed relationship information in scientific notation
+cat("Detailed p-value assignments:\n")
+for (i in 1:nrow(corr_melted)) {
+  var1 <- corr_melted$Var1[i]
+  var2 <- corr_melted$Var2[i]
+  p_val <- corr_melted$p_value[i]
+  significance <- ifelse(p_val < alpha, "Significant", "Not Significant")
+  
+  # Print the formatted output with p-value in scientific notation
+  cat(sprintf("Relationship: %s vs %s, p-value: %.4e (%s)\n", 
+              var1, var2, p_val, significance))
+}
+
 # Assign colors based on significance for the text
 corr_melted$text_color <- ifelse(corr_melted$p_value < alpha, "black", "dimgray")
 
