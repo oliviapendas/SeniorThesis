@@ -1,18 +1,17 @@
 # Load required packages
 library(readxl)
 library(dplyr)
-library(corrplot)
-library(RColorBrewer)
-library(colorspace)  # Include this line to load the colorspace package
-
+library(reshape2)      # For melting the correlation matrix
+library(ggplot2)       # For ggplot functionality
+library(colorspace)    # For diverging color palettes, if necessary
 
 # Load your data
 dat <- read_excel("El_Tatio_GDGTs_2025.xlsx")
 
 # Select relevant geochemical parameters
-params <- dat %>% select(pH, Salinity, Temp, DO, ORP)  # Update parameter names
+params <- dat %>% select(pH, Salinity, Temp, DO, ORP)
 
-# Calculate correlation matrix
+# Calculate the correlation matrix
 corr_matrix <- cor(params, use = "pairwise.complete.obs")
 
 # Calculate p-values for the correlations
@@ -29,35 +28,37 @@ p_matrix <- sapply(1:ncol(params), function(i) {
   })
 })
 
-# Print the p-value matrix
+# Print the matrix of p-values for inspection
 print("Matrix of p-values:")
 print(p_matrix)
 
 # Specify significance level
 alpha <- 0.05
 
-# Create a color matrix based on significance
-cor_col <- ifelse(p_matrix < alpha, "black", "gray")
+# Melt the correlation matrix to a long format for ggplot
+corr_melted <- melt(corr_matrix)
 
-# Set up the PNG device with larger dimensions
-png("correlation_plot_improved.png", width = 1200, height = 800, res = 300)
+# Add the corresponding p-value information to the melted data frame
+corr_melted$p_value <- melt(p_matrix)$value
 
-# Generate the improved correlation plot
-corrplot(corr_matrix, method = "color",
-         type = "full",  # Full correlation matrix
-         tl.col = "black",
-         tl.srt = 45,  # Rotate labels
-         cl.lim = c(-1, 1),  # Set limits for color legend
-         addgrid.col = "gray",
-         number.cex = 0.5,  # Adjust text size for numbers
-         diag = FALSE,  # Hide the diagonal
-         col = diverge_hcl(12, h=c(315,180), c=110, l=c(50,60)),
-           # brewer.pal(n = 8, name = "RdBu"),  # Use a diverging color palette
-         addCoef.col = cor_col,  # Use the color matrix based on significance
-         title = "Correlation Matrix of Geochemical Parameters",  # Add a title
-         cex.main = 0.8,  # Change title size; adjust as necessary
-         mar = c(1, 1, 2, 4),  # Adjust margins for title and legend
-         tl.cex = 0.7)  # Adjust size of text labels
+# Assign colors based on significance for the text
+corr_melted$text_color <- ifelse(corr_melted$p_value < alpha, "black", "dimgray")
+
+# Set up the ggplot for the correlation plot
+png("ggplot_correlation_plot.png", width = 1200, height = 800, res = 300)
+
+ggplot(corr_melted, aes(x = Var1, y = Var2)) +
+  geom_tile(aes(fill = value), color = "white") +  # Tile color based on correlation
+  geom_text(aes(label = round(value, 2)), 
+            color = ifelse(corr_melted$p_value < alpha, "black", "dimgray"), size = 3) +  # Explicitly control text color
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red",
+                       midpoint = 0, limit = c(-1, 1), name = "Correlation") +
+  ggtitle("Correlation Matrix of Geochemical Parameters") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        plot.title = element_text(hjust = 0.4, vjust = 1, size = 10))
 
 # Close the device
 dev.off()
