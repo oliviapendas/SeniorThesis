@@ -2,7 +2,9 @@
 library(readxl)
 library(dplyr)
 library(corrplot)
-library(RColorBrewer)  # Load RColorBrewer for color palettes
+library(RColorBrewer)
+library(colorspace)  # Include this line to load the colorspace package
+
 
 # Load your data
 dat <- read_excel("El_Tatio_GDGTs_2025.xlsx")
@@ -13,6 +15,30 @@ params <- dat %>% select(pH, Salinity, Temp, DO, ORP)  # Update parameter names
 # Calculate correlation matrix
 corr_matrix <- cor(params, use = "pairwise.complete.obs")
 
+# Calculate p-values for the correlations
+get_p_value <- function(x, y) {
+  cor_test <- cor.test(x, y)
+  return(cor_test$p.value)
+}
+
+# Create a matrix of p-values
+p_matrix <- sapply(1:ncol(params), function(i) {
+  sapply(1:ncol(params), function(j) {
+    if (i == j) return(NA) # Set diagonal to NA
+    else get_p_value(params[[i]], params[[j]])
+  })
+})
+
+# Print the p-value matrix
+print("Matrix of p-values:")
+print(p_matrix)
+
+# Specify significance level
+alpha <- 0.05
+
+# Create a color matrix based on significance
+cor_col <- ifelse(p_matrix < alpha, "black", "gray")
+
 # Set up the PNG device with larger dimensions
 png("correlation_plot_improved.png", width = 1200, height = 800, res = 300)
 
@@ -22,15 +48,16 @@ corrplot(corr_matrix, method = "color",
          tl.col = "black",
          tl.srt = 45,  # Rotate labels
          cl.lim = c(-1, 1),  # Set limits for color legend
-         addgrid.col = "gray", 
+         addgrid.col = "gray",
          number.cex = 0.5,  # Adjust text size for numbers
          diag = FALSE,  # Hide the diagonal
-         col = brewer.pal(n = 8, name = "RdYlBu"),  # Use a diverging color palette
-         addCoef.col = "black",  # Add correlation coefficients
+         col = diverge_hcl(12, h=c(315,180), c=110, l=c(50,60)),
+           # brewer.pal(n = 8, name = "RdBu"),  # Use a diverging color palette
+         addCoef.col = cor_col,  # Use the color matrix based on significance
          title = "Correlation Matrix of Geochemical Parameters",  # Add a title
          cex.main = 0.8,  # Change title size; adjust as necessary
          mar = c(1, 1, 2, 4),  # Adjust margins for title and legend
          tl.cex = 0.7)  # Adjust size of text labels
 
 # Close the device
-dev.off()  
+dev.off()
