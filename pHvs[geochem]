@@ -1,3 +1,76 @@
+#### pH vs Temp with neutral line ####
+
+# Create data frame of neutral pH at different temperatures
+temp <- seq(10, 110, by = 1)
+pH <- 8 * (temp^2 * 10^(-5)) - (0.0208 * temp) + 7.4692
+neutral_line <- data.frame(Temp = temp, pH = pH)
+
+#### Hot spring T vs. pH plot ####
+png("Temp_vs_pH.png",
+    width = 4, height = 3, units = 'in', res = 300)
+par(mfrow=c(1,1),
+    mar=c(3,3,2,6),
+    mgp = c(3, 0.4, 0)) 
+plot(dat$Temp ~ dat$pH,
+     las = 1,
+     xlim = c(1,10),
+     ylim = c(50, 90),
+     pch = 19, 
+     cex = 1,
+     col = "deeppink2",
+     lwd = 3,
+     xlab = "",
+     ylab = "",
+     xaxt = "n",
+     yaxt = "n")
+# plot neutral pH line
+lines(neutral_line$Temp ~ neutral_line$pH,
+      lwd = 2)
+
+# add axes
+axis(1, at = c(1,3,5,7,9),
+     las = 1,
+     tck = -0.035,
+     cex.axis = 1,
+     line = 0)
+axis(2, at = c(seq(50, 90, 10)),
+     las = 1,
+     tck = -0.035,
+     cex.axis = 1,
+     line = 0)
+title(main = "El Tatio Hot Springs", 
+      line = 0.5, 
+      cex.main = 1.2,
+      outer = F,
+      adj = 0.5)
+title(xlab = "pH", 
+      line = 1.4, 
+      cex.lab = 1.3,
+      outer = F)
+title(ylab = "T °C", 
+      line = -1.2, 
+      cex.lab = 1.3,
+      outer = T)
+legend("topright",
+       xpd = NA, # plots in outer margin area
+       cex = 0.8,
+       inset = c(-0.55, -0.05),
+       bty = "n",
+       legend = c("Neutral pH"),
+       col = "black",
+       lty = 1,
+       lwd = 2) 
+legend("topright",
+       xpd = NA, # plots in outer margin area
+       cex = 0.8,
+       inset = c(-0.5, 0.08),
+       bty = "n",
+       legend = c("Hot Springs"),
+       col = "deeppink2",
+       pch = 19)
+dev.off()
+
+
 #### pH vs. Temp, no point coloration ####
 
 #### Load relevant packages ####
