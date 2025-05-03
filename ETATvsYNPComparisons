@@ -504,4 +504,154 @@ print(ETAT_RIvsTemp_summary)
 YNP_RIvsTemp_summary <- summary(YNP_RIvsTemp)
 print(YNP_RIvsTemp_summary)
 
-dev.off()  # Save the plot  
+dev.off()  # Save the plot
+
+### --- With confidence intervals, vs. pH --- ###
+# Clear environment and graphics, load packages
+cat("\014")
+rm(list = ls())
+graphics.off()
+library("readxl")
+library("tidyverse")
+library("gt")
+
+# Load your data
+dat <- read_excel("ETATvsYNP2025.xltx")
+
+# Color mapping for locations
+get_color <- function(location) {
+  if (location == "ETAT") {
+    return("hotpink")
+  } else if (location == "YNP") {
+    return("turquoise")
+  } else {
+    return("gray")
+  }
+}
+
+# Separate by Type and Location
+CL_data <- subset(dat, Type == "CL")
+IPL_data <- subset(dat, Type == "IPL")
+ETAT_data <- subset(dat, Location == "ETAT")
+YNP_data <- subset(dat, Location == "YNP")
+
+# Fit linear models
+ETAT_RIvspH <- lm(Ring_index ~ pH, data = ETAT_data)
+YNP_RIvspH <- lm(Ring_index ~ pH, data = YNP_data)
+
+# Prepare pH sequences for prediction
+pH_seq <- seq(1, 10, length.out = 200)
+
+# Create newdata frames for predict()
+newdata_ETAT <- data.frame(pH = pH_seq)
+newdata_YNP <- data.frame(pH = pH_seq)
+
+# Predict with confidence intervals
+pred_ETAT <- predict(ETAT_RIvspH, newdata = newdata_ETAT, interval = "confidence", level = 0.95)
+pred_YNP <- predict(YNP_RIvspH, newdata = newdata_YNP, interval = "confidence", level = 0.95)
+
+# Prepare colors with some transparency for CI polygons
+ci_col_ETAT <- adjustcolor("hotpink", alpha.f = 0.2)
+ci_col_YNP <- adjustcolor("turquoise", alpha.f = 0.2)
+
+# Extract regression parameters
+coef_ETAT <- coef(ETAT_RIvspH)
+r2_ETAT <- round(summary(ETAT_RIvspH)$r.squared, 2)
+p_value_ETAT <- summary(ETAT_RIvspH)$coefficients[2, 4]
+
+coef_YNP <- coef(YNP_RIvspH)
+r2_YNP <- round(summary(YNP_RIvspH)$r.squared, 2)
+p_value_YNP <- summary(YNP_RIvspH)$coefficients[2, 4]
+
+# Format p-values for display
+format_p_value <- function(p) {
+  if (p < 0.001) {
+    return("< 0.001")
+  } else {
+    return(sprintf("= %.3f", p))
+  }
+}
+
+# Create legend text with p-values to the right of R²
+eq_ETAT <- paste0("El Tatio: RI = ", round(coef_ETAT[2], 2), " * pH + ", round(coef_ETAT[1], 2))
+r2p_text_ETAT <- paste0("R² = ", r2_ETAT, "   p ", format_p_value(p_value_ETAT))
+
+eq_YNP <- paste0("Yellowstone: RI = ", round(coef_YNP[2], 2), " * pH + ", round(coef_YNP[1], 2))
+r2p_text_YNP <- paste0("R² = ", r2_YNP, "   p ", format_p_value(p_value_YNP))
+
+# Start plotting
+png("Comparison_RingIndex_vs_pH.png", width = 4, height = 3, units = "in", res = 300)
+par(mfrow = c(1,1), mar = c(3,3,2,6), mgp = c(3,0.4,0))
+
+# Plot empty canvas
+plot(dat$pH, dat$Ring_index,
+     type = "n",
+     las = 1,
+     xlim = c(1, 10),
+     ylim = c(0, 5),
+     xlab = "",
+     ylab = "",
+     xaxt = "n",
+     yaxt = "n")
+
+# Add confidence interval polygons first
+polygon(c(pH_seq, rev(pH_seq)),
+        c(pred_ETAT[,"upr"], rev(pred_ETAT[,"lwr"])),
+        col = ci_col_ETAT, border = NA)
+
+polygon(c(pH_seq, rev(pH_seq)),
+        c(pred_YNP[,"upr"], rev(pred_YNP[,"lwr"])),
+        col = ci_col_YNP, border = NA)
+
+# Add regression lines on top of CIs
+lines(pH_seq, pred_ETAT[,"fit"], col = "hotpink", lwd = 2)
+lines(pH_seq, pred_YNP[,"fit"], col = "turquoise", lwd = 2)
+
+# Add points on top of everything
+points(CL_data$pH, CL_data$Ring_index,
+       pch = 15, # squares
+       col = sapply(CL_data$Location, get_color),
+       cex = 1)
+
+points(IPL_data$pH, IPL_data$Ring_index,
+       pch = 1,  # circles
+       col = sapply(IPL_data$Location, get_color),
+       cex = 1)
+
+# Add axes
+axis(1, at = seq(1,10,1), las = 1, tck = -0.035, cex.axis = 1)
+axis(2, at = seq(0,5,1), las = 1, tck = -0.035, cex.axis = 1)
+
+# Add titles
+title(main = "Ring Index vs pH", line = 0.5, cex.main = 1.2)
+title(xlab = "pH", line = 1.4, cex.lab = 1.3)
+title(ylab = "Ring Index", line = 1.2, cex.lab = 1.3)
+
+# Add legends with R² and p-values side-by-side
+legend("bottomleft", inset = c(0, 0.101),
+       legend = c(eq_ETAT, r2p_text_ETAT),
+       col = "hotpink",
+       lwd = 2,
+       bty = "n",
+       cex = 0.6)
+
+legend("bottomleft", inset = c(0, 0),
+       legend = c(eq_YNP, r2p_text_YNP),
+       col = "turquoise",
+       lwd = 2,
+       bty = "n",
+       cex = 0.6)
+
+# Add legend for point shapes (moved up a bit)
+par(xpd = TRUE) # allow drawing outside plot area
+legend("bottomright", inset = c(-0.65, -0.1), title = "Type",
+       legend = c("CL (Squares)", "IPL (Circles)"),
+       pch = c(15, 1),
+       col = c("black", "black"),
+       pt.cex = 1,
+       bty = "n",
+       cex = 0.8,
+       text.width = strwidth("CL (Squares)"),
+       y.intersp = 0.7)
+
+dev.off()
